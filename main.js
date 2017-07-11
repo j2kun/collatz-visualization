@@ -1,12 +1,13 @@
 import * as d3 from 'd3';
+import { sprintf } from 'sprintf-js';
 
 // http://www.d3noob.org/2014/02/styles-in-d3js.html
 
 // let num_points = 1000000;
-let numPoints = 10000;
+let numPoints = 5000;
 
-let width = 1000;
-let height = 800;
+let width = 1200;
+let height = 1000;
 let svg = d3.select("#content").append("svg")
                            .attr('id', 'rendered_svg')
                            .attr("width", width)
@@ -14,25 +15,17 @@ let svg = d3.select("#content").append("svg")
 
 let parameters = {
   numDisplay: 100,
-  evenAngle: Math.PI / 20,  // angle adjustment, even goes right, odd goes left
-  oddAngle: Math.PI / 15,
-  startingPoint: [width / 2, height],
-  segmentLength: 10,
-  startingAngle: Math.PI * 0.9,
+  evenAngle: 10,  // angle adjustment, even goes right, odd goes left, in degrees
+  oddAngle: 20,
+  startingPoint: [width / 2, height - 100],
+  segmentLength: 7,
+  startingAngle: 150,
 }
 
-
-d3.select('#hide_while_loading').style('display', 'none');
-d3.select('#loading').style('display', 'block');
-let graph = generateCollatz(numPoints);
-let allPolylines = graph.map(function(n) {
-  return generatePolyline(graph, n, parameters);
-});
-window.graph = graph;
-window.allPolylines = allPolylines;
-console.log('Done generating data');
-d3.select('#loading').style('display', 'none');
-d3.select('#hide_while_loading').style('display', 'block');
+let state = {
+  polylines: null,
+  graph: null,
+}
 
 
 function tryCreateSequence(start, max) {
@@ -88,8 +81,9 @@ function generatePolyline(graph, start, parameters) {
   let angle = startingAngle;
   for (n of sequence) {
     angle += n % 2 ? oddAngle : -evenAngle;
-    let newX = currentPoint[0] + Math.round(segmentLength * Math.cos(angle));
-    let newY = currentPoint[1] - Math.round(segmentLength * Math.sin(angle));
+    let angleRadians = Math.PI * angle / 180;
+    let newX = currentPoint[0] + Math.round(segmentLength * Math.cos(angleRadians));
+    let newY = currentPoint[1] - Math.round(segmentLength * Math.sin(angleRadians));
     currentPoint = [newX, newY];
     polylinePoints.push(currentPoint.join(','));
   }
@@ -98,8 +92,17 @@ function generatePolyline(graph, start, parameters) {
 }
 
 
+function createPolylines(graph, parameters) {
+  return graph.map(function(n) {
+    return generatePolyline(graph, n, parameters);
+  });
+}
+
+
 function render(polylinePoints, parameters) {
-  let polylines = svg.selectAll("polyline").data(polylinePoints).enter().append('polyline');
+  let polylines = svg.selectAll("polyline").data(polylinePoints);
+  polylines.exit().remove();
+  polylines.enter().append('polyline');
   // style
   polylines.style("stroke", "black")
            .style("fill", "none")
@@ -111,5 +114,42 @@ function render(polylinePoints, parameters) {
 }
 
 
-render(allPolylines, parameters);
-// set up visualization sliders
+function setupSliders() {
+  d3.select("#evenAngle").attr('value', '100');
+  d3.select("#oddAngle").attr('value', '200');
+  d3.select("#evenAngle");
+  d3.select("#evenAngle").on("input", function() {
+    parameters.evenAngle = this.value / 10;
+    update();
+  });
+  d3.select("#oddAngle").on("input", function() {
+    parameters.oddAngle = this.value / 10;
+    update();
+  });
+  parameters.evenAngle = 10;
+  parameters.oddAngle = 20;
+}
+
+
+function update() {
+  setLabels(parameters.evenAngle, parameters.oddAngle);
+  state.polylines = createPolylines(state.graph, parameters);
+  render(state.polylines, parameters);
+}
+
+
+function setLabels(evenAngle, oddAngle) {
+  d3.select('#evenAngleDegreesLabel').text(sprintf("%2.1f", evenAngle));
+  d3.select('#oddAngleDegreesLabel').text(sprintf("%2.1f", oddAngle));
+}
+
+
+d3.select('#hide_while_loading').style('display', 'none');
+d3.select('#loading').style('display', 'block');
+
+state.graph = generateCollatz(numPoints);
+setupSliders(10, 20);
+update();
+
+d3.select('#loading').style('display', 'none');
+d3.select('#hide_while_loading').style('display', 'flex');
