@@ -4,7 +4,7 @@ import { sprintf } from 'sprintf-js';
 // http://www.d3noob.org/2014/02/styles-in-d3js.html
 
 // let num_points = 1000000;
-let numPoints = 5000;
+let numPoints = 1000;
 
 let width = 1200;
 let height = 1000;
@@ -15,8 +15,8 @@ let svg = d3.select("#content").append("svg")
 
 let parameters = {
   numDisplay: 100,
-  evenAngle: 10,  // angle adjustment, even goes right, odd goes left, in degrees
-  oddAngle: 20,
+  evenAngle: 24,  // angle adjustment, even goes right, odd goes left, in degrees
+  oddAngle: 16,
   startingPoint: [width / 2, height - 100],
   segmentLength: 7,
   startingAngle: 150,
@@ -33,7 +33,7 @@ function tryCreateSequence(start, max) {
   let n = start;
   while (n != 1) {
     sequence.unshift(n);
-    n = n % 2 ? 3*n + 1 : n / 2;
+    n = n % 2 ? (3*n + 1)/2 : n / 2;
     if (n >= max) {
       return null;
     }
@@ -115,8 +115,8 @@ function render(polylinePoints, parameters) {
 
 
 function setupSliders() {
-  d3.select("#evenAngle").attr('value', '100');
-  d3.select("#oddAngle").attr('value', '200');
+  d3.select("#evenAngle").attr('value', '243');
+  d3.select("#oddAngle").attr('value', '169');
   d3.select("#evenAngle");
   d3.select("#evenAngle").on("input", function() {
     parameters.evenAngle = this.value / 10;
@@ -126,8 +126,8 @@ function setupSliders() {
     parameters.oddAngle = this.value / 10;
     update();
   });
-  parameters.evenAngle = 10;
-  parameters.oddAngle = 20;
+  parameters.evenAngle = 24;
+  parameters.oddAngle = 16;
 }
 
 
